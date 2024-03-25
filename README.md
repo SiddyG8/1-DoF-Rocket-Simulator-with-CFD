@@ -1,1 +1,1 @@
-# HPR Onboarding Project (S1 2024)
+# HPR On-boarding Project (S1 2024)
