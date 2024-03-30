@@ -8,4 +8,5 @@ class Constants:
     p0: int = 101325, # Standard sea level pressure (Pa)
     T0: float = 288.15, # Standard sea level temperature (K)
     L: float = -0.0065, # Lapse rate (K/m)
-
+    GM: float = 3.986e14, # Earth's gravitational constant
+    RE: int = 6378137, # Earth's radius (m)
