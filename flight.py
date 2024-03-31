@@ -5,17 +5,16 @@ class Flight:
         self.rocket = rocket
         self.dt = dt
         self.t = 0
+        self.z = 0
+        self.vz = 0
+        self.az = 0
+        self.phase = "On pad"
 
     def simulate(self) -> None:
         """
         Simulate the flight of the rocket.
         """
-        self.rocket.motor.burnout()
-        while self.t < self.rocket.motor.tb:
-            self.rocket.motor.thrust()
-            self.rocket.accelerate()
-            self.rocket.propagate()
-            self.t += self.dt
+        pass
 
 if __name__ == "__main__":
     pass
