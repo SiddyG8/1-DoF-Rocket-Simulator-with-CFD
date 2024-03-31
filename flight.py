@@ -1,5 +1,4 @@
 from rocket import Rocket
-from motor import Motor
 
 class Flight:
     def __init__(
