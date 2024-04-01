@@ -48,6 +48,10 @@ class Flight:
         self.az = 0
         self.phase = "On pad"
 
+    @property
+    def altitude(self) -> float:
+        return self.z
+
     def simulate(self) -> None:
         """
         Simulate the flight of the rocket.
