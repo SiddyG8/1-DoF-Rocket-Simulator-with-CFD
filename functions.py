@@ -2,18 +2,6 @@ from numpy import e, sin, log10
 
 class Functions:
     @classmethod
-    def drag_coefficient(M: float) -> float:
-        """
-        Calculate the drag coefficient of the rocket.
-
-        Parameters:
-            M (float): Mach number of the rocket.
-        Returns:
-            float: Drag coefficient of the rocket.
-        """
-        return pow(e, -1.2 * M) * sin(M) + (M / 6) * log10(M + 1)
-
-    @classmethod
     def drag_force(Cd: float, S: float, p: float, v: float) -> float:
         """
         Calculate the drag force of the rocket.
