@@ -1,4 +1,5 @@
 from rocket import Rocket
+import constants as c
 
 class Flight:
     """
@@ -51,6 +52,10 @@ class Flight:
     @property
     def altitude(self) -> float:
         return self.z
+    
+    @property
+    def mach_number(self) -> float:
+        return self.vz / 343.2
 
     def simulate(self) -> None:
         """
