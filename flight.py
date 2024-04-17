@@ -1,5 +1,6 @@
 from rocket import Rocket
 import constants as c
+from numpy import e, sin, log10
 
 class Flight:
     """
@@ -47,15 +48,19 @@ class Flight:
         self.z = 0
         self.vz = 0
         self.az = 0
-        self.phase = "On pad"
+        self.phase = "pad"
 
     @property
     def altitude(self) -> float:
         return self.z
-    
+
+    @property
+    def drag_coefficient(self) -> float:
+        return pow(e, -1.2 * self.M) * sin(self.M) + (self.M / 6) * log10(self.M + 1)
+
     @property
     def mach_number(self) -> float:
-        return self.vz / 343.2
+        pass
 
     def simulate(self) -> None:
         """
