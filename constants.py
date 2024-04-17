@@ -9,3 +9,5 @@ class Constants:
     L: float = -0.0065, # Lapse rate (K/m)
     GM: float = 3.986e14, # Earth's gravitational constant
     RE: int = 6378137, # Earth's radius (m)
+    gamma: float = 1.4, # Specific heat ratio of air
+    rho0: float = 1.225 
