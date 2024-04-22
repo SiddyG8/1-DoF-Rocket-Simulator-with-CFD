@@ -1,0 +1,2 @@
+class NoseCone:
+    pass
