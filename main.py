@@ -1,6 +1,3 @@
-import numpy
-import matplotlib
-
 class Main:
     def __init__(self) -> None:
         pass
