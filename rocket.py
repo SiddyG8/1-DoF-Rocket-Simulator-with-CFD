@@ -17,7 +17,7 @@ class Rocket:
         return pi * (self.diameter / 2) ** 2
 
     def thrust(self, t) -> float:
-        return self.T0 * (1 - (10**-5) * (e**(log(10**5)/self.tb * t)))
+        return max(0, self.T0 * (1 - (10**-5) * (e**(log(10**5)/self.tb * t))))
 
 if __name__ == "__main__":
     pass
