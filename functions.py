@@ -17,7 +17,6 @@ def calculate_gravitational_force(h, m) -> float:
 
 
 def calculate_mach_number(v, air_temperature) -> float:
-    # print(f"{v=}, {air_temperature=}")
     return abs(v) / sqrt(c.gamma * c.R * air_temperature)
 
 
@@ -30,7 +29,6 @@ def calculate_air_density(air_pressure, air_temperature) -> float:
 
 
 def calculate_air_pressure(air_temperature) -> float:
-    # print(f"{air_temperature=}")
     return c.p0 * pow((air_temperature / c.T0), (-c.g0 / (c.R * c.L)))
 
 
