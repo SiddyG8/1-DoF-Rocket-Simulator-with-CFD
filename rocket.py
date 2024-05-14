@@ -1,27 +1,23 @@
-import math
+from math import pi, e, log
 
 class Rocket:
-    def __init__(self, motor, wet_mass, fuel_mass, diameter, fins = None, nose_cone = None) -> None:
-        self.motor = motor
-        self.fins = fins
-        self.nose_cone = nose_cone
-        self.wet_mass = wet_mass
+    def __init__(self, mass, fuel_mass, diameter, T0, tb) -> None:
+        self.mass = mass
         self.fuel_mass = fuel_mass
         self.diameter = diameter
+        self.T0 = T0
+        self.tb = tb
 
     @property
-    def dry_mass(self) -> float:
-        return self.wet_mass - self.fuel_mass
-    
+    def delta_mass(self) -> float:
+        return -self.fuel_mass / self.tb
+
     @property
     def wetted_area(self) -> float:
-        wetted_area = math.pi * (self.diameter / 2) ** 2
-        if self.nose_cone and self.nose_cone.diameter > self.diameter:
-            wetted_area = self.nose_cone.wetted_area
-        if self.fins:
-            wetted_area += self.fins.wetted_area
-        return wetted_area
+        return pi * (self.diameter / 2) ** 2
 
+    def thrust(self, t) -> float:
+        return max(0, self.T0 * (1 - (10**-5) * (e**(log(10**5)/self.tb * t))))
 
 if __name__ == "__main__":
     pass
