@@ -1,14 +1,18 @@
 from rocket import Rocket
 from flight import Flight
+from motor import Motor
 
 
 def main() -> None:
+    motor = Motor(
+        T0=3415, # Newtons
+        tb=2.9 # Seconds
+    )
     rocket = Rocket(
         mass=27.201, # kg
         fuel_mass=4.766, # kg
         diameter=0.156, # meters
-        T0=3415, # Newtons
-        tb=2.9 # Seconds
+        motor=motor
     )
     flight = Flight(rocket)
 
