@@ -1,6 +1,5 @@
 from rocket import Rocket
 from flight import Flight
-import matplotlib.pyplot as plt
 
 
 def main() -> None:
@@ -12,15 +11,32 @@ def main() -> None:
         tb=2.9 # Seconds
     )
     flight = Flight(rocket)
-    # print(max(flight.z))
-    # plt.plot(flight.t, flight.vz)
-    plt.plot(flight.t, flight.thrust_forces, label="Thrust")
-    plt.plot(flight.t, flight.drag_forces, label="Drag")
-    plt.plot(flight.t, flight.gravitional_forces, label="Gravitation")
-    print(max(flight.z))
-    print(max(flight.drag_forces))
-    plt.legend()
-    plt.show()
+
+    # Printing flight statistics
+    print(f"Apogee: {max(flight.z):.2f} meters at {flight.t[flight.z.index(max(flight.z))]:.2f} seconds")
+    print(f"Max velocity: {max(flight.vz):.2f} m/s at {flight.t[flight.vz.index(max(flight.vz))]:.2f} seconds")
+    print(f"Flight time: {flight.t[-1]:.2f} seconds")
+
+    # # Forces plot
+    # flight.plot(
+    #     "t",
+    #     ("thrust_forces", "Thrust"),
+    #     ("drag_forces", "Drag"),
+    #     ("gravitional_forces", "Gravitation"),
+    #     x_label="Time (s)",
+    #     y_label="Force (N)"
+    # )
+
+    # Altitude plot
+    flight.plot(
+        "t",
+        # ("z", "Altitude"),
+        "z",
+        # ("vz", "Velocity (m/s)"),
+        # "az",
+        x_label="Time (s)",
+        y_label="Altitude (m)"
+    )
 
 
 if __name__ == "__main__":
