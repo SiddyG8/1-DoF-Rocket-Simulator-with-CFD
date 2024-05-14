@@ -70,11 +70,20 @@ class Flight:
             self.thrust_forces.append(thrust_force)
             self.phases.append(phase)
 
-    def plot(self, x, y, x_label, y_label) -> None:
-        plt.plot(x, y)
+    def plot(self, x, *y: tuple[str, str], x_label: str = "x", y_label: str = "y") -> None:
+        x_var = getattr(self, x)
+        legend_needed = False
+        for var in y:
+            y_attr, label = var if isinstance(var, tuple) else (var, None)
+            legend_needed = True if label else legend_needed
+            plt.plot(x_var, getattr(self, y_attr), label=label)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
+        if legend_needed:
+            plt.legend()
         plt.show()
+        # TODO: Create a seperate class for handling plots
+        # TODO: Create a seperate class for displaying flight statistics
 
 
 if __name__ == "__main__":
