@@ -20,7 +20,12 @@ class Flight:
         self.air_densities = [c.rho0]
         self.air_temperatures = [c.T0]
         self.thrust_forces = [self.rocket.thrust(0)]
-        self.phases = ["on pad"]
+        self.event_log = {
+            "Motor Ignition": [0, "green"],
+            "Motor Burnout": [self.rocket.motor.tb, "orange"],
+            "Apogee": [0, "blue"],
+            "Ground Hit": [0, "red"]
+        }
 
         # Simulate the flight based off initial parameters
         self.simulate()
@@ -35,7 +40,8 @@ class Flight:
         return net_force / self.masses[-1]
 
     def simulate(self) -> None:
-        while "landed" not in self.phases:
+        apogee_reached = False
+        while self.z[-1] >= 0:
             t = self.t[-1] + self.dt
             z = self.z[-1] + self.dt * self.vz[-1]
             vz = self.vz[-1] + self.dt * self.az[-1]
@@ -50,10 +56,9 @@ class Flight:
             drag_force = f.calculate_drag_force(air_density, vz, self.rocket.wetted_area, cd)
             thrust_force = self.rocket.thrust(t)
 
-            if z < 0:
-                phase = "landed"
-            else:
-                phase = "on pad"
+            if vz <= 0 and not apogee_reached:
+                self.event_log["Apogee"][0] = t
+                apogee_reached = True
 
             self.t.append(t)
             self.z.append(z)
@@ -68,18 +73,24 @@ class Flight:
             self.drag_coefficients.append(cd)
             self.drag_forces.append(drag_force)
             self.thrust_forces.append(thrust_force)
-            self.phases.append(phase)
+        self.event_log["Ground Hit"][0] = self.t[-1]
 
-    def plot(self, x, *y: tuple[str, str], x_label: str = "x", y_label: str = "y") -> None:
+    def plot(self, x, *y: tuple[str, str], x_label: str = "x", y_label: str = "y", events=True) -> None:
         x_var = getattr(self, x)
-        legend_needed = False
+        legend = False
         for var in y:
             y_attr, label = var if isinstance(var, tuple) else (var, None)
-            legend_needed = True if label else legend_needed
+            legend = True if label else legend
             plt.plot(x_var, getattr(self, y_attr), label=label)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
-        if legend_needed:
+        if events:
+            for event, details in self.event_log.items():
+                t, color = details
+                plt.axvline(t, color=color, linestyle="--", linewidth=1)
+                plt.text(t, plt.gca().get_ylim()[1], event, color=color, fontsize=8, rotation=90, verticalalignment="top")
+                plt.text(t, plt.gca().get_ylim()[1], f"{t:.2f}s", color=color, fontsize=8, ha="center", va="bottom")
+        if legend:
             plt.legend()
         plt.show()
         # TODO: Create a seperate class for handling plots
