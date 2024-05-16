@@ -88,10 +88,11 @@ class Flight:
             for event, details in self.event_log.items():
                 t, color = details
                 plt.axvline(t, color=color, linestyle="--", linewidth=1)
-                plt.text(t, plt.gca().get_ylim()[1], event, color=color, fontsize=8, rotation=90, verticalalignment="top")
+                plt.text(t, plt.gca().get_ylim()[1], event, color=color, fontsize=8, rotation=-90, verticalalignment="top")
                 plt.text(t, plt.gca().get_ylim()[1], f"{t:.2f}s", color=color, fontsize=8, ha="center", va="bottom")
         if legend:
             plt.legend()
+        plt.grid()
         plt.show()
         # TODO: Create a seperate class for handling plots
         # TODO: Create a seperate class for displaying flight statistics
