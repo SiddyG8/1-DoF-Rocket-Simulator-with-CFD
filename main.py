@@ -2,6 +2,12 @@ from rocket import Rocket
 from flight import Flight
 from motor import Motor
 
+# * Project TODO list
+# TODO: Add thrust curve support
+# TODO: Add stability calculations
+# TODO: Add CFD drag data support
+# TODO: Create a seperate class for handling plots
+# TODO: Create a seperate class for displaying flight statistics
 
 def main() -> None:
     motor = Motor(
