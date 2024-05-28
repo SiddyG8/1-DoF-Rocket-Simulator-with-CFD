@@ -37,7 +37,10 @@ class Flight:
         air_density = f.calculate_air_density(air_pressure, air_temperature)
         mach_number = f.calculate_mach_number(v, air_temperature)
         drag_coefficient = f.calculate_drag_coefficient(mach_number)
-        net_force = self.rocket.thrust(t) + f.calculate_drag_force(air_density, v, self.rocket.wetted_area, drag_coefficient) + f.calculate_gravitational_force(s, self.masses[-1])
+        net_force = \
+            self.rocket.thrust(t) \
+            + f.calculate_drag_force(air_density, v, self.rocket.wetted_area, drag_coefficient) \
+            + f.calculate_gravitational_force(s, self.masses[-1])
         return net_force / self.masses[-1]
 
     def simulate(self) -> None:
@@ -89,7 +92,8 @@ class Flight:
             for event, details in self.event_log.items():
                 t, color = details
                 plt.axvline(t, color=color, linestyle="--", linewidth=1)
-                plt.text(t, int(sum(plt.gca().get_ylim()[:2]) / 2), event, color=color, fontsize=8, rotation=-90, verticalalignment="center")
+                plt.text(t, int(sum(plt.gca().get_ylim()[:2]) / 2), event, color=color, fontsize=8, rotation=-90,
+                         verticalalignment="center")
                 plt.text(t, plt.gca().get_ylim()[1], f"{t:.2f}s", color=color, fontsize=8, ha="center", va="bottom")
         if legend:
             plt.legend()
