@@ -1,5 +1,6 @@
 from math import e, log
 
+
 class Motor:
     def __init__(self, T0: float, tb: float) -> None:
         self.T0 = T0

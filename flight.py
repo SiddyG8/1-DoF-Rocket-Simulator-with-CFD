@@ -3,6 +3,7 @@ import constants as c
 import functions as f
 import matplotlib.pyplot as plt
 
+
 class Flight:
     def __init__(self, rocket: Rocket, dt: float = 0.05) -> None:
         self.rocket = rocket
@@ -13,7 +14,7 @@ class Flight:
         self.az = [self.rocket.thrust(0) / self.rocket.mass]
         self.masses = [self.rocket.mass]
         self.M = [f.calculate_mach_number(0, c.T0)]
-        self.gravitional_forces = [-c.g0 * self.rocket.mass]
+        self.gravitational_forces = [-c.g0 * self.rocket.mass]
         self.drag_forces = [0]
         self.drag_coefficients = [0]
         self.air_pressures = [c.p0]
@@ -47,7 +48,7 @@ class Flight:
             vz = self.vz[-1] + self.dt * self.az[-1]
             az = self.f(t, z, vz)
             mass = f.calculate_mass(self.rocket.mass, self.rocket.fuel_mass, self.rocket.delta_mass, t)
-            gravitional_force = f.calculate_gravitational_force(z, mass)
+            gravitational_force = f.calculate_gravitational_force(z, mass)
             air_temperature = f.calculate_air_temperature(z)
             air_pressure = f.calculate_air_pressure(air_temperature)
             air_density = f.calculate_air_density(air_pressure, air_temperature)
@@ -65,7 +66,7 @@ class Flight:
             self.vz.append(vz)
             self.az.append(az)
             self.masses.append(mass)
-            self.gravitional_forces.append(gravitional_force)
+            self.gravitational_forces.append(gravitational_force)
             self.air_temperatures.append(air_temperature)
             self.air_densities.append(air_density)
             self.air_pressures.append(air_pressure)
@@ -75,7 +76,7 @@ class Flight:
             self.thrust_forces.append(thrust_force)
         self.event_log["Ground Hit"][0] = self.t[-1]
 
-    def plot(self, x, *y: tuple[str, str], x_label: str = "x", y_label: str = "y", events=True) -> None:
+    def plot(self, x, *y: tuple[str, str] | str, x_label: str = "x", y_label: str = "y", events=True) -> None:
         x_var = getattr(self, x)
         legend = False
         for var in y:
@@ -88,14 +89,12 @@ class Flight:
             for event, details in self.event_log.items():
                 t, color = details
                 plt.axvline(t, color=color, linestyle="--", linewidth=1)
-                plt.text(t, plt.gca().get_ylim()[1], event, color=color, fontsize=8, rotation=-90, verticalalignment="top")
+                plt.text(t, int(sum(plt.gca().get_ylim()[:2]) / 2), event, color=color, fontsize=8, rotation=-90, verticalalignment="center")
                 plt.text(t, plt.gca().get_ylim()[1], f"{t:.2f}s", color=color, fontsize=8, ha="center", va="bottom")
         if legend:
             plt.legend()
         plt.grid()
         plt.show()
-        # TODO: Create a seperate class for handling plots
-        # TODO: Create a seperate class for displaying flight statistics
 
 
 if __name__ == "__main__":
