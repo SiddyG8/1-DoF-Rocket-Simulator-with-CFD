@@ -1,12 +1,17 @@
+from dataclasses import dataclass
+from motor import Motor
+from nose_cone import NoseCone
+from fins import Fins
 from math import pi
 
-
+@dataclass
 class Rocket:
-    def __init__(self, mass, fuel_mass, diameter, motor) -> None:
-        self.mass = mass
-        self.fuel_mass = fuel_mass
-        self.diameter = diameter
-        self.motor = motor
+    mass: float
+    fuel_mass: float
+    diameter: float
+    motor: Motor
+    nose_cone: NoseCone
+    fins: Fins
 
     @property
     def delta_mass(self) -> float:

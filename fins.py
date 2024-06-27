@@ -1,11 +1,14 @@
+from dataclasses import dataclass
+
+
+@dataclass
 class Fins:
-    def __init__(self, num_fins, width, root_chord, tip_chord, semi_span, sweep_angle) -> None:
-        self.num_fins = num_fins
-        self.width = width
-        self.root_chord = root_chord
-        self.tip_chord = tip_chord
-        self.semi_span = semi_span
-        self.sweep_angle = sweep_angle
+    num_fins: int
+    width: float
+    root_chord: float
+    tip_chord: float
+    semi_span: float
+    sweep_length: float
 
     @property
     def wetted_area(self) -> float:
