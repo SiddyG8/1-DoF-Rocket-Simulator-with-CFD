@@ -48,7 +48,7 @@ def main() -> None:
     rocket.attach_nose_cone(nose_cone)
     rocket.attach_fins(fins)
 
-    flight = Flight(rocket)
+    flight = Flight(rocket, cfd_drag_data="Data/aggregated_coefficients.csv")
 
     # Printing flight statistics
     print(f"Apogee: {max(flight.z):.2f} meters at {flight.t[flight.z.index(max(flight.z))]:.2f} seconds")

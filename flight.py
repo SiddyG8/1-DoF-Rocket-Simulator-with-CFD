@@ -2,10 +2,11 @@ from rocket import Rocket
 import constants as c
 import functions as f
 import matplotlib.pyplot as plt
+import csv
 
 
 class Flight:
-    def __init__(self, rocket: Rocket, dt: float = 0.05) -> None:
+    def __init__(self, rocket: Rocket, *, drag_data: str = "", dt: float = 0.05) -> None:
         self.rocket = rocket
         self.dt = dt
         self.t = [0]
@@ -27,9 +28,23 @@ class Flight:
             "Apogee": [0, "blue"],
             "Ground Hit": [0, "red"]
         }
+        self.mach_vs_cd = {}
+
+        # Initialise the CFD drag data if provided
+        if drag_data:
+            self.initialise_drag_data(drag_data)
 
         # Simulate the flight based off initial parameters
         self.simulate()
+    
+    def initialise_drag_data(self, drag_data: str) -> None:
+        with open(drag_data) as file:
+            reader = csv.reader(file)
+            for row in reader:
+                pitch, roll, flap = row["Pitch (deg)"], row["Roll (deg)"], row["Flap (% extension)"]
+                if pitch == 0 and roll == 0 and flap == 0:
+                    M, cd = row["Mach Number"], row["Total C_D"]
+                    self.mach_vs_cd[float(M)] = float(cd)
 
     def f(self, t, s, v):
         air_temperature = f.calculate_air_temperature(s)
