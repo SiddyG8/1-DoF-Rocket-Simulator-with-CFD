@@ -1,7 +1,9 @@
 from rocket import Rocket, Motor, Fins, NoseCone
 from flight import Flight
 
-
+"""
+Main function for running the simulation
+"""
 def main() -> None:
     # Rocket components
     motor = Motor(

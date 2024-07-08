@@ -5,8 +5,40 @@ import matplotlib.pyplot as plt
 import csv
 
 
+"""
+Represents the flight of a rocket.
+
+Attributes:
+    rocket (Rocket): The rocket object.
+    dt (float): The time step for the simulation.
+    t (list[float]): The time values.
+    z (list[float]): The altitude values.
+    vz (list[float]): The vertical velocity values.
+    az (list[float]): The vertical acceleration values.
+    masses (list[float]): The mass values.
+    M (list[float]): The Mach number values.
+    gravitational_forces (list[float]): The gravitational force values.
+    drag_forces (list[float]): The drag force values.
+    drag_coefficients (list[float]): The drag coefficient values.
+    air_pressures (list[float]): The air pressure values.
+    air_densities (list[float]): The air density values.
+    air_temperatures (list[float]): The air temperature values.
+    thrust_forces (list[float]): The thrust force values.
+    event_log (dict[str, list[float, str]]): The event log.
+    twr (list[float]): The thrust-to-weight ratio values.
+    dynamic_pressures (list[float]): The dynamic pressure values.
+    mach_to_cd (dict[float, float]): The Mach number to drag coefficient mapping.
+"""
 class Flight:
     def __init__(self, rocket: Rocket, *, drag_data: str = "", dt: float = 0.05) -> None:
+        """
+        Initialises the flight simulation.
+
+        Parameters:
+            rocket (Rocket): The rocket object.
+            drag_data (str): The path to the drag data file.
+            dt (float): The time step for the simulation.
+        """
         # Initialise parameters
         self.rocket = rocket
         self.dt = dt
@@ -41,6 +73,12 @@ class Flight:
         self.simulate()
 
     def initialise_drag_data(self, drag_data: str) -> None:
+        """
+        Initialises the drag data from a CSV file.
+
+        Parameters:
+            drag_data (str): The path to the drag data file.
+        """
         with open(drag_data) as file:
             reader = csv.DictReader(file)
             for row in reader:
@@ -49,19 +87,38 @@ class Flight:
                     M, cd = row["Mach Number"], row["Total C_D"]
                     self.mach_to_cd[float(M)] = float(cd)
 
-    def f(self, t, s, v):
+    def f(self, t: float, s: float, v: float) -> float:
+        """
+        Calculates the net acceleration of the rocket.
+
+        Parameters:
+            t (float): The time.
+            s (float): The altitude.
+            v (float): The velocity.
+
+        Returns:
+            float: The net acceleration of the rocket.
+        """
+        # Calculate parameters required for the force calculations
         air_temperature = f.calculate_air_temperature(s)
         air_pressure = f.calculate_air_pressure(air_temperature)
         air_density = f.calculate_air_density(air_pressure, air_temperature)
         mach_number = f.calculate_mach_number(v, air_temperature)
         drag_coefficient = f.calculate_drag_coefficient(mach_number, self.mach_to_cd)
+
+        # Calculate the net force acting on the rocket
         net_force = \
             self.rocket.thrust(t) \
             + f.calculate_drag_force(air_density, v, self.rocket.wetted_area, drag_coefficient) \
             + f.calculate_gravitational_force(s, self.masses[-1])
+
+        # Return the net acceleration
         return net_force / self.masses[-1]
 
     def simulate(self) -> None:
+        """
+        Simulates the flight of the rocket.
+        """
         # Simulation loop
         apogee_reached = False
         while self.z[-1] >= 0:
@@ -108,28 +165,69 @@ class Flight:
         self.event_log["Ground Hit"][0] = self.t[-1]
     
     def off_rod_velocity(self, rod_length: float) -> tuple[float, float]:
+        """
+        Calculates the velocity of the rocket when it leaves the launch rod.
+
+        Parameters:
+            rod_length (float): The length of the launch rod.
+
+        Returns:
+            tuple[float, float]: The time and velocity when the rocket leaves the launch rod.
+        """
         for i in range(len(self.z)):
             if self.z[i] >= rod_length:
                 return self.t[i], self.vz[i]
 
     def plot(self, x: str, *y: tuple[str, str] | str, x_label: str = "x", y_label: str = "y", events=True) -> None:
+        """
+        Plots the simulation data.
+
+        Parameters:
+            x (str): The x-axis data.
+            y (tuple[str, str] | str): The y-axis data.
+            x_label (str): The x-axis label.
+            y_label (str): The y-axis label.
+            events (bool): Whether to plot events.
+
+        Example:
+            flight.plot(
+                "t",
+                ("z", "Altitude"),
+                ("vz", "Velocity (m/s)"),
+                ("az", "Acceleration (m/s^2)"),
+                x_label="Time (s)",
+                y_label="Altitude (m)"
+            )
+            This will plot the altitude, velocity, and acceleration against time. It will also label the curves and axes.
+        """
+        # Get the x-axis data via its attribute name
         x_var = getattr(self, x)
+
+        # Plot the data and label the curves
         legend = False
         for var in y:
             y_attr, label = var if isinstance(var, tuple) else (var, None)
             legend = True if label else legend
             plt.plot(x_var, getattr(self, y_attr), label=label)
+
+        # Label the axes
         plt.xlabel(x_label)
         plt.ylabel(y_label)
+
+        # Plot events if required
         if events:
+            # Plot events as vertical lines with labels and timestamps
             for event, details in self.event_log.items():
                 t, color = details
                 plt.axvline(t, color=color, linestyle="--", linewidth=1)
-                plt.text(t, int(sum(plt.gca().get_ylim()[:2]) / 2), event, color=color, fontsize=8, rotation=-90,
-                         verticalalignment="center")
+                plt.text(t, int(sum(plt.gca().get_ylim()[:2]) / 2), event, color=color, fontsize=8, rotation=-90, verticalalignment="center")
                 plt.text(t, plt.gca().get_ylim()[1], f"{t:.2f}s", color=color, fontsize=8, ha="center", va="bottom")
+
+        # Show legend if required
         if legend:
             plt.legend()
+
+        # Show the plot with gridlines
         plt.grid()
         plt.show()
 
