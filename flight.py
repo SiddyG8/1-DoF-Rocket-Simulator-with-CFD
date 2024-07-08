@@ -11,10 +11,10 @@ class Flight:
         self.t = [0]
         self.z = [0]
         self.vz = [0]
-        self.az = [self.rocket.thrust(0) / self.rocket.mass]
-        self.masses = [self.rocket.mass]
+        self.az = [self.rocket.thrust(0) / self.rocket.total_mass]
+        self.masses = [self.rocket.total_mass]
         self.M = [f.calculate_mach_number(0, c.T0)]
-        self.gravitational_forces = [-c.g0 * self.rocket.mass]
+        self.gravitational_forces = [-c.g0 * self.rocket.total_mass]
         self.drag_forces = [0]
         self.drag_coefficients = [0]
         self.air_pressures = [c.p0]
@@ -23,7 +23,7 @@ class Flight:
         self.thrust_forces = [self.rocket.thrust(0)]
         self.event_log = {
             "Motor Ignition": [0, "green"],
-            "Motor Burnout": [self.rocket.motor.tb, "orange"],
+            "Motor Burnout": [self.rocket.motor.burn_time, "orange"],
             "Apogee": [0, "blue"],
             "Ground Hit": [0, "red"]
         }
@@ -50,7 +50,7 @@ class Flight:
             z = self.z[-1] + self.dt * self.vz[-1]
             vz = self.vz[-1] + self.dt * self.az[-1]
             az = self.f(t, z, vz)
-            mass = f.calculate_mass(self.rocket.mass, self.rocket.fuel_mass, self.rocket.delta_mass, t)
+            mass = f.calculate_mass(self.rocket.total_mass, self.rocket.motor.mass, self.rocket.motor.delta_mass, t)
             gravitational_force = f.calculate_gravitational_force(z, mass)
             air_temperature = f.calculate_air_temperature(z)
             air_pressure = f.calculate_air_pressure(air_temperature)
@@ -79,7 +79,7 @@ class Flight:
             self.thrust_forces.append(thrust_force)
         self.event_log["Ground Hit"][0] = self.t[-1]
 
-    def plot(self, x, *y: tuple[str, str] | str, x_label: str = "x", y_label: str = "y", events=True) -> None:
+    def plot(self, x: str, *y: tuple[str, str] | str, x_label: str = "x", y_label: str = "y", events=True) -> None:
         x_var = getattr(self, x)
         legend = False
         for var in y:
