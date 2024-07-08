@@ -1,10 +1,9 @@
 import constants as c
-from numpy import e, sin, log10
-from math import sqrt
+from math import sqrt, e, sin, log10
 
 
 def calculate_mass(total_mass, fuel_mass, delta_mass, t) -> float:
-    return max(total_mass - fuel_mass, total_mass + delta_mass * t)
+    return max(total_mass - fuel_mass, total_mass - delta_mass * t)
 
 
 def calculate_gravitational_acceleration(h) -> float:
@@ -38,11 +37,6 @@ def calculate_drag_coefficient(M) -> float:
 
 def calculate_drag_force(air_density, v, A, cd) -> float:
     drag = 0.5 * air_density * v * v * A * cd
-    if v >= 0:
-        return -drag
 
-    return drag
-
-
-def within_tolerance(value, target, tolerance):
-    return target - tolerance <= value <= target + tolerance
+    # Return negative drag if the velocity is negative
+    return drag if v < 0 else -drag
