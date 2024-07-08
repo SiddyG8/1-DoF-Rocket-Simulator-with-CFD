@@ -31,7 +31,24 @@ def calculate_air_pressure(air_temperature) -> float:
     return c.p0 * pow((air_temperature / c.T0), (-c.g0 / (c.R * c.L)))
 
 
-def calculate_drag_coefficient(M) -> float:
+def calculate_dynamic_pressure(air_density, u) -> float:
+    return 0.5 * air_density * u * u
+
+
+def calculate_drag_coefficient(M: float, drag_data: dict[float, float] = None) -> float:
+    if drag_data:
+        for data_M, data_cd in drag_data.items():
+            if M - data_M > 0:
+                M1 = data_M
+                cd1 = data_cd
+            elif M - data_M < 0:
+                M2 = data_M
+                cd2 = data_cd
+            else:
+                return data_cd
+
+        return (cd1*(M2 - M) + cd2*(M - M1))/(M2 - M1)
+
     return pow(e, -1.2 * M) * sin(M) + (M / 6) * log10(M + 1)
 
 

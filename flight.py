@@ -7,6 +7,7 @@ import csv
 
 class Flight:
     def __init__(self, rocket: Rocket, *, drag_data: str = "", dt: float = 0.05) -> None:
+        # Initialise parameters
         self.rocket = rocket
         self.dt = dt
         self.t = [0]
@@ -28,7 +29,9 @@ class Flight:
             "Apogee": [0, "blue"],
             "Ground Hit": [0, "red"]
         }
-        self.mach_vs_cd = {}
+        self.twr = [self.rocket.thrust(0) / (self.rocket.total_mass * c.g0)]
+        self.dynamic_pressures = [0]
+        self.mach_to_cd = {}
 
         # Initialise the CFD drag data if provided
         if drag_data:
@@ -36,22 +39,22 @@ class Flight:
 
         # Simulate the flight based off initial parameters
         self.simulate()
-    
+
     def initialise_drag_data(self, drag_data: str) -> None:
         with open(drag_data) as file:
-            reader = csv.reader(file)
+            reader = csv.DictReader(file)
             for row in reader:
                 pitch, roll, flap = row["Pitch (deg)"], row["Roll (deg)"], row["Flap (% extension)"]
                 if pitch == 0 and roll == 0 and flap == 0:
                     M, cd = row["Mach Number"], row["Total C_D"]
-                    self.mach_vs_cd[float(M)] = float(cd)
+                    self.mach_to_cd[float(M)] = float(cd)
 
     def f(self, t, s, v):
         air_temperature = f.calculate_air_temperature(s)
         air_pressure = f.calculate_air_pressure(air_temperature)
         air_density = f.calculate_air_density(air_pressure, air_temperature)
         mach_number = f.calculate_mach_number(v, air_temperature)
-        drag_coefficient = f.calculate_drag_coefficient(mach_number)
+        drag_coefficient = f.calculate_drag_coefficient(mach_number, self.mach_to_cd)
         net_force = \
             self.rocket.thrust(t) \
             + f.calculate_drag_force(air_density, v, self.rocket.wetted_area, drag_coefficient) \
@@ -59,8 +62,10 @@ class Flight:
         return net_force / self.masses[-1]
 
     def simulate(self) -> None:
+        # Simulation loop
         apogee_reached = False
         while self.z[-1] >= 0:
+            # Calculate the next state
             t = self.t[-1] + self.dt
             z = self.z[-1] + self.dt * self.vz[-1]
             vz = self.vz[-1] + self.dt * self.az[-1]
@@ -74,11 +79,15 @@ class Flight:
             cd = f.calculate_drag_coefficient(M)
             drag_force = f.calculate_drag_force(air_density, vz, self.rocket.wetted_area, cd)
             thrust_force = self.rocket.thrust(t)
+            twr = thrust_force / (mass * c.g0)
+            dynamic_pressure = f.calculate_dynamic_pressure(air_density, vz)
 
+            # Apogee event
             if vz <= 0 and not apogee_reached:
                 self.event_log["Apogee"][0] = t
                 apogee_reached = True
 
+            # Update parameters
             self.t.append(t)
             self.z.append(z)
             self.vz.append(vz)
@@ -92,7 +101,16 @@ class Flight:
             self.drag_coefficients.append(cd)
             self.drag_forces.append(drag_force)
             self.thrust_forces.append(thrust_force)
+            self.twr.append(twr)
+            self.dynamic_pressures.append(dynamic_pressure)
+
+        # Ground hit event
         self.event_log["Ground Hit"][0] = self.t[-1]
+    
+    def off_rod_velocity(self, rod_length: float) -> tuple[float, float]:
+        for i in range(len(self.z)):
+            if self.z[i] >= rod_length:
+                return self.t[i], self.vz[i]
 
     def plot(self, x: str, *y: tuple[str, str] | str, x_label: str = "x", y_label: str = "y", events=True) -> None:
         x_var = getattr(self, x)
