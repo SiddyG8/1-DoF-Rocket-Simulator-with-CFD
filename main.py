@@ -38,12 +38,19 @@ def main() -> None:
     rocket.attach_nose_cone(nose_cone)
     rocket.attach_fins(fins)
 
-    # flight = Flight(rocket, drag_data="Data/aggregated_coefficients.csv")
+    # Run the simulation (without drag data)
     flight = Flight(rocket)
     flight.summary()
     flight.write_to_file("Data/sim_data.csv")
-    flight.plot("times", ("thrust_forces", "Thrust"), ("drag_forces", "Drag"), ("gravitational_forces", "Weight"), x_label="Time (s)", y_label="Force (N)")
-    flight.plot("times", ("altitudes", "Altitude"), ("velocities", "Velocity (m/s)"), ("accelerations", "Acceleration (m/s^2)"), x_label="Time (s)", y_label="Altitude (m)")
+    flight.plot("times", ("thrust_forces", "Thrust"), ("drag_forces", "Drag"), ("gravitational_forces", "Weight"), title="Forces Plot", x_label="Time (s)", y_label="Force (N)")
+    flight.plot("times", ("altitudes", "Altitude"), ("velocities", "Velocity (m/s)"), ("accelerations", "Acceleration (m/s^2)"), title="Altitude Plot", x_label="Time (s)", y_label="Altitude")
+
+    # Run the simulation (with drag data)
+    flight = Flight(rocket, drag_data="Data/drag_data.csv")
+    flight.summary()
+    flight.write_to_file("Data/sim_data_cfd.csv")
+    flight.plot("times", ("thrust_forces", "Thrust"), ("drag_forces", "Drag"), ("gravitational_forces", "Weight"), title="Forces Plot", x_label="Time (s)", y_label="Force (N)")
+    flight.plot("times", ("altitudes", "Altitude"), ("velocities", "Velocity (m/s)"), ("accelerations", "Acceleration (m/s^2)"), title="Altitude Plot", x_label="Time (s)", y_label="Altitude")
 
 if __name__ == "__main__":
     main()
