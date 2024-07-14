@@ -2,16 +2,17 @@ from rocket import Rocket
 import constants as c
 from math import sqrt, e, sin, log10
 import matplotlib.pyplot as plt
+import numpy as np
 import csv
+import os
 
 
 class Flight:
-    def __init__(self, rocket: Rocket, *, rod_height: int = 3, drag_data_path: str = "", output_path: str = "data/sim_data.csv", dt: float = 0.05) -> None:
+    def __init__(self, rocket: Rocket, *, rod_height: float = 3, drag_data: str = "", dt: float = 0.05) -> None:
         # Flight parameters
         self.rocket = rocket
         self.rod_height = rod_height
-        self.drag_data_path = drag_data_path
-        self.output_path = output_path
+        self.drag_data = drag_data
         self.dt = dt
         self.iterations = 1
 
@@ -53,6 +54,12 @@ class Flight:
 
         # Event log (populated during simulation)
         self.event_log = {}
+        self.flight_stats = {}
+
+        # Initialise drag data if provided
+        self.using_drag_data = os.path.isfile(self.drag_data)
+        if self.using_drag_data:
+            self.load_drag_data()
 
         # Simulate the flight based off initial parameters
         self.simulate()
@@ -60,27 +67,39 @@ class Flight:
     def simulate(self) -> None:
         while self.z >= 0:
             self.update_parameters()
-            self.update_event_log()
+            self.update_events()
             self.log_parameters()
 
-    def update_event_log(self) -> None:
+    def load_drag_data(self) -> None:
+        with open(self.drag_data) as file:
+            reader = csv.DictReader(file)
+            self.mach_data = []
+            self.cd_data = []
+            for row in reader:
+                self.mach_data.append(float(row["Mach Number"]))
+                self.cd_data.append(float(row["Total C_D"]))
+
+    def update_events(self) -> None:
+        # Update event log
         if self.z < self.altitudes[-1] and "Apogee" not in self.event_log:
             self.event_log["Apogee"] = self.t, self.altitudes[-1]
-        if self.vz < self.velocities[-1] and "Max Velocity" not in self.event_log:
-            self.event_log["Max Velocity"] = self.t, self.velocities[-1]
-        if self.az < self.accelerations[-1] and "Max Acceleration" not in self.event_log:
-            self.event_log["Max Acceleration"] = self.t, self.accelerations[-1]
-        if self.dynamic_pressure < self.dynamic_pressures[-1] and "Max Q" not in self.event_log:
-            self.event_log["Max Q"] = self.t, self.dynamic_pressures[-1]
         if self.thrust_force > 0 and "Motor Ignition" not in self.event_log:
             self.event_log["Motor Ignition"] = self.times[-1]
         if self.thrust_force == 0 and "Motor Burnout" not in self.event_log:
             self.event_log["Motor Burnout"] = self.t
         if self.z <= 0 and self.t > 0 and "Ground Hit" not in self.event_log:
-            self.event_log["Ground Hit"] = self.t
-        if self.z >= self.rod_height and "Off-Rod Velocity" not in self.event_log:
-            self.event_log["Off-Rod Velocity"] = self.t, self.vz
+            self.event_log["Ground Hit"] = self.t, self.vz
         # Chute deployment events soon
+
+        # Update flight stats
+        if self.vz < self.velocities[-1] and "Max Velocity" not in self.flight_stats:
+            self.flight_stats["Max Velocity"] = self.t, self.velocities[-1]
+        if self.az < self.accelerations[-1] and "Max Acceleration" not in self.flight_stats:
+            self.flight_stats["Max Acceleration"] = self.t, self.accelerations[-1]
+        if self.dynamic_pressure < self.dynamic_pressures[-1] and "Max Q" not in self.flight_stats:
+            self.flight_stats["Max Q"] = self.t, self.dynamic_pressures[-1]
+        if self.z >= self.rod_height and "Off-Rod Velocity" not in self.flight_stats:
+            self.flight_stats["Off-Rod Velocity"] = self.t, self.vz
 
     def log_parameters(self) -> None:
         self.times.append(self.t)
@@ -147,6 +166,10 @@ class Flight:
         self.M = abs(self.vz) / sqrt(c.gamma * c.R * self.air_temperature)
 
     def update_drag_coefficient(self) -> None:
+        if self.using_drag_data:
+            self.cd = np.interp(self.M, self.mach_data, self.cd_data)
+            return None
+
         self.cd = pow(e, -1.2 * self.M) * sin(self.M) + (self.M / 6) * log10(self.M + 1)
 
     def update_drag_force(self) -> None:
@@ -162,7 +185,7 @@ class Flight:
     def update_twr(self) -> None:
         self.twr = abs(self.thrust_force / (self.mass * c.g0))
 
-    def plot(self, x: str, *y: tuple[str, str] | str, x_label: str = "x", y_label: str = "y", events=False) -> None:
+    def plot(self, x: str, *y: tuple[str, str] | str, title: str = "Flight Data", x_label: str = "x", y_label: str = "y", events=True) -> None:
         """
         Plots the simulation data.
 
@@ -194,18 +217,19 @@ class Flight:
             legend = True if label else legend
             plt.plot(x_var, getattr(self, y_attr), label=label)
 
-        # Label the axes
+        # Label the axes and title
+        plt.title(title)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
 
         # Plot events if required
         if events:
             # Plot events as vertical lines with labels and timestamps
-            for event, details in self.event_log.items():
-                t, color = details
-                plt.axvline(t, color=color, linestyle="--", linewidth=1)
-                plt.text(t, int(sum(plt.gca().get_ylim()[:2]) / 2), event, color=color, fontsize=8, rotation=-90, verticalalignment="center")
-                plt.text(t, plt.gca().get_ylim()[1], f"{t:.2f}s", color=color, fontsize=8, ha="center", va="bottom")
+            for event, value in self.event_log.items():
+                t, _ = value if isinstance(value, tuple) else (value, None)
+                plt.axvline(t, linestyle="--", linewidth=1)
+                plt.text(t, int(sum(plt.gca().get_ylim()[:2]) / 2), event, fontsize=8, rotation=-90, verticalalignment="center")
+                plt.text(t, plt.gca().get_ylim()[1], f"{t:.2f}s", fontsize=8, ha="center", va="bottom")
 
         # Show legend if required
         if legend:
@@ -214,7 +238,7 @@ class Flight:
         # Show the plot with gridlines
         plt.grid()
         plt.show()
-    
+
     def write_to_file(self, output_path: str) -> None:
         data_dict = {
             "Time (s)": self.times,
@@ -246,8 +270,18 @@ class Flight:
                 writer.writerow({key: data[i] for key, data in data_dict.items()})
 
     def summary(self) -> None:
-        for event, details in self.event_log.items():
-            print(f"{event}: {details}")
+        print("Flight Summary")
+        print("---------------------------------")
+        print(f"Apogee: {self.event_log["Apogee"][1]:.2f}m at {self.event_log["Apogee"][0]:.2f}s")
+        print(f"Motor Ignition: {self.event_log["Motor Ignition"]:.2f}s")
+        print(f"Motor Burnout: {self.event_log["Motor Burnout"]:.2f}s")
+        print(f"Flight Time: {self.event_log["Ground Hit"][0]:.2f}s with a landing velocity of {self.event_log["Ground Hit"][1]:.2f}m/s")
+        print(f"Max Velocity: {self.flight_stats["Max Velocity"][1]:.2f}m/s at {self.flight_stats["Max Velocity"][0]:.2f}s")
+        print(f"Max Acceleration: {self.flight_stats["Max Acceleration"][1]:.2f}m/s^2 at {self.flight_stats["Max Acceleration"][0]:.2f}s")
+        print(f"Max Q: {self.flight_stats["Max Q"][1]/1000:.2f}kPa at {self.flight_stats["Max Q"][0]:.2f}s")
+        print(f"Off-Rod Velocity: {self.flight_stats["Off-Rod Velocity"][1]:.2f}m/s at {self.flight_stats["Off-Rod Velocity"][0]:.2f}s")
+        print("---------------------------------")
+        print()
 
 
 if __name__ == "__main__":
