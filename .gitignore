@@ -52,3 +52,5 @@ wheels/
 
 # Custom
 test.py
+data/sim_data.csv
+data/sim_data_cfd.csv
