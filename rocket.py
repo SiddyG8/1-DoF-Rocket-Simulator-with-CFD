@@ -92,6 +92,17 @@ class Fins:
         return self.num_fins * self.width * self.semi_span
 
 
+class Parachute:
+    def __init__(self, diameter: float, drag_coefficient: float, mass: float) -> None:
+        self.diameter = diameter
+        self.drag_coefficient = drag_coefficient
+        self.mass = mass
+
+    @property
+    def wetted_area(self) -> float:
+        return pi * (self.diameter / 2) ** 2
+
+
 """
 Represents a rocket.
 
@@ -120,6 +131,8 @@ class Rocket:
         self.motor = motor
         self.nose_cone = None
         self.fins = None
+        self.main_parachute = None
+        self.drogue_parachute = None
 
     @property
     def total_mass(self) -> float:
@@ -129,6 +142,10 @@ class Rocket:
             total_mass += self.nose_cone.mass
         if self.fins:
             total_mass += self.fins.total_mass
+        if self.main_parachute:
+            total_mass += self.main_parachute.mass
+        if self.drogue_parachute:
+            total_mass += self.drogue_parachute.mass
 
         return total_mass
 
@@ -158,6 +175,18 @@ class Rocket:
         Attaches fins to the rocket.
         """
         self.fins = fins
+    
+    def attach_main_parachute(self, parachute: Parachute) -> None:
+        """
+        Attaches a main parachute to the rocket.
+        """
+        self.main_parachute = parachute
+
+    def attach_drogue_parachute(self, parachute: Parachute) -> None:
+        """
+        Attaches a drogue parachute to the rocket.
+        """
+        self.drogue_parachute = parachute
 
     def thrust(self, t) -> float:
         """
