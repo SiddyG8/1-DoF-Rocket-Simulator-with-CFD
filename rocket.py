@@ -123,16 +123,18 @@ class Rocket:
 
     @property
     def total_mass(self) -> float:
-        total_mass = self.body_mass
+        total_mass = self.body_mass + self.motor.mass
 
-        if self.motor:
-            total_mass += self.motor.mass
         if self.nose_cone:
             total_mass += self.nose_cone.mass
         if self.fins:
             total_mass += self.fins.total_mass
 
         return total_mass
+
+    @property
+    def dry_mass(self) -> float:
+        return self.total_mass - self.motor.mass
 
     @property
     def wetted_area(self) -> float:
