@@ -271,16 +271,16 @@ class Flight:
 
     def summary(self) -> None:
         print("Flight Summary")
-        print("---------------------------------")
-        print(f"Apogee: {self.event_log["Apogee"][1]:.2f}m at {self.event_log["Apogee"][0]:.2f}s")
+        print("-------------------------------------------------------------")
+        print(f"Apogee: {self.event_log["Apogee"][1]:.2f} m at {self.event_log["Apogee"][0]:.2f}s")
         print(f"Motor Ignition: {self.event_log["Motor Ignition"]:.2f}s")
         print(f"Motor Burnout: {self.event_log["Motor Burnout"]:.2f}s")
-        print(f"Flight Time: {self.event_log["Ground Hit"][0]:.2f}s with a landing velocity of {self.event_log["Ground Hit"][1]:.2f}m/s")
-        print(f"Max Velocity: {self.flight_stats["Max Velocity"][1]:.2f}m/s at {self.flight_stats["Max Velocity"][0]:.2f}s")
-        print(f"Max Acceleration: {self.flight_stats["Max Acceleration"][1]:.2f}m/s^2 at {self.flight_stats["Max Acceleration"][0]:.2f}s")
-        print(f"Max Q: {self.flight_stats["Max Q"][1]/1000:.2f}kPa at {self.flight_stats["Max Q"][0]:.2f}s")
-        print(f"Off-Rod Velocity: {self.flight_stats["Off-Rod Velocity"][1]:.2f}m/s at {self.flight_stats["Off-Rod Velocity"][0]:.2f}s")
-        print("---------------------------------")
+        print(f"Flight Time: {self.event_log["Ground Hit"][0]:.2f}s with a landing velocity of {self.event_log["Ground Hit"][1]:.2f} m/s")
+        print(f"Max Velocity: {self.flight_stats["Max Velocity"][1]:.2f} m/s at {self.flight_stats["Max Velocity"][0]:.2f}s")
+        print(f"Max Acceleration: {self.flight_stats["Max Acceleration"][1]:.2f} m/s^2 at {self.flight_stats["Max Acceleration"][0]:.2f}s")
+        print(f"Max Q: {self.flight_stats["Max Q"][1]/1000:.2f} kPa at {self.flight_stats["Max Q"][0]:.2f}s")
+        print(f"Off-Rod Velocity: {self.flight_stats["Off-Rod Velocity"][1]:.2f} m/s at {self.flight_stats["Off-Rod Velocity"][0]:.2f}s")
+        print("-------------------------------------------------------------")
         print()
 
 

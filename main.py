@@ -49,8 +49,8 @@ def main() -> None:
     flight = Flight(rocket, drag_data="Data/drag_data.csv")
     flight.summary()
     flight.write_to_file("Data/sim_data_cfd.csv")
-    flight.plot("times", ("thrust_forces", "Thrust"), ("drag_forces", "Drag"), ("gravitational_forces", "Weight"), title="Forces Plot", x_label="Time (s)", y_label="Force (N)")
-    flight.plot("times", ("altitudes", "Altitude"), ("velocities", "Velocity (m/s)"), ("accelerations", "Acceleration (m/s^2)"), title="Altitude Plot", x_label="Time (s)", y_label="Altitude")
+    flight.plot("times", ("thrust_forces", "Thrust"), ("drag_forces", "Drag"), ("gravitational_forces", "Weight"), title="Forces Plot (CFD)", x_label="Time (s)", y_label="Force (N)")
+    flight.plot("times", ("altitudes", "Altitude"), ("velocities", "Velocity (m/s)"), ("accelerations", "Acceleration (m/s^2)"), title="Altitude Plot (CFD)", x_label="Time (s)", y_label="Altitude")
 
 if __name__ == "__main__":
     main()
