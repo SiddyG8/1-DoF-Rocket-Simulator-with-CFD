@@ -8,13 +8,16 @@ import os
 
 
 class Flight:
-    def __init__(self, rocket: Rocket, *, rod_height: float = 3, drag_data: str = "", dt: float = 0.05) -> None:
+    def __init__(self, rocket: Rocket, *, deploy_altitude: float = 250,  rod_height: float = 3, drag_data: str = "", dt: float = 0.05) -> None:
         # Flight parameters
         self.rocket = rocket
         self.rod_height = rod_height
         self.drag_data = drag_data
         self.dt = dt
         self.iterations = 1
+        self.deploy_altitude = deploy_altitude
+        self.drogue_deployed = False
+        self.main_deployed = False
 
         # Initial conditions
         self.t = 0
@@ -83,6 +86,13 @@ class Flight:
         # Update event log
         if self.z < self.altitudes[-1] and "Apogee" not in self.event_log:
             self.event_log["Apogee"] = self.t, self.altitudes[-1]
+            if self.rocket.drogue_parachute:
+                self.event_log["Drogue Deployment"] = self.t
+                self.deploy_drogue_parachute()
+        if self.z <= self.deploy_altitude and "Apogee" in self.event_log and "Main Deployment" not in self.event_log:
+            self.event_log["Main Deployment"] = self.t
+            if self.rocket.main_parachute:
+                self.deploy_main_parachute()
         if self.thrust_force > 0 and "Motor Ignition" not in self.event_log:
             self.event_log["Motor Ignition"] = self.times[-1]
         if self.thrust_force == 0 and "Motor Burnout" not in self.event_log:
@@ -166,6 +176,12 @@ class Flight:
         self.M = abs(self.vz) / sqrt(c.gamma * c.R * self.air_temperature)
 
     def update_drag_coefficient(self) -> None:
+        if self.main_deployed:
+            self.cd = self.rocket.main_parachute.drag_coefficient
+            return None
+        if self.drogue_deployed:
+            self.cd = self.rocket.drogue_parachute.drag_coefficient
+            return None
         if self.using_drag_data:
             self.cd = np.interp(self.M, self.mach_data, self.cd_data)
             return None
@@ -173,7 +189,13 @@ class Flight:
         self.cd = pow(e, -1.2 * self.M) * sin(self.M) + (self.M / 6) * log10(self.M + 1)
 
     def update_drag_force(self) -> None:
-        drag_force = 0.5 * self.air_density * self.vz**2 * self.rocket.wetted_area * self.cd
+        wetted_area = self.rocket.wetted_area
+        if self.main_deployed:
+            wetted_area = self.rocket.main_parachute.wetted_area
+        if self.drogue_deployed:
+            wetted_area = self.rocket.drogue_parachute.wetted_area
+
+        drag_force = 0.5 * self.air_density * self.vz**2 * wetted_area * self.cd
         self.drag_force = -drag_force if self.vz >= 0 else drag_force
 
     def update_thrust_force(self) -> None:
@@ -185,32 +207,17 @@ class Flight:
     def update_twr(self) -> None:
         self.twr = abs(self.thrust_force / (self.mass * c.g0))
 
+    def deploy_drogue_parachute(self) -> None:
+        self.drogue_deployed = True
+
+    def deploy_main_parachute(self) -> None:
+        self.main_deployed = True
+
     def plot(self, x: str, *y: tuple[str, str] | str, title: str = "Flight Data", x_label: str = "x", y_label: str = "y", events=True) -> None:
-        """
-        Plots the simulation data.
-
-        Parameters:
-            x (str): The x-axis data.
-            y (tuple[str, str] | str): The y-axis data.
-            x_label (str): The x-axis label.
-            y_label (str): The y-axis label.
-            events (bool): Whether to plot events.
-
-        Example:
-            flight.plot(
-                "t",
-                ("z", "Altitude"),
-                ("vz", "Velocity (m/s)"),
-                ("az", "Acceleration (m/s^2)"),
-                x_label="Time (s)",
-                y_label="Altitude (m)"
-            )
-            This will plot the altitude, velocity, and acceleration against time. It will also label the curves and axes.
-        """
         # Get the x-axis data via its attribute name
         x_var = getattr(self, x)
 
-        # Plot the data and label the curves
+        # Plot the data and label the curves if required
         legend = False
         for var in y:
             y_attr, label = var if isinstance(var, tuple) else (var, None)
@@ -227,9 +234,33 @@ class Flight:
             # Plot events as vertical lines with labels and timestamps
             for event, value in self.event_log.items():
                 t, _ = value if isinstance(value, tuple) else (value, None)
-                plt.axvline(t, linestyle="--", linewidth=1)
-                plt.text(t, int(sum(plt.gca().get_ylim()[:2]) / 2), event, fontsize=8, rotation=-90, verticalalignment="center")
-                plt.text(t, plt.gca().get_ylim()[1], f"{t:.2f}s", fontsize=8, ha="center", va="bottom")
+
+                # Check if a line for the event already exists
+                line_exists = False
+                for line in plt.gca().get_lines():
+                    if line.get_xdata()[0] == t:
+                        line_exists = True
+                        break
+
+                # Add a new line element if the event doesn't already have one
+                if not line_exists:
+                    plt.axvline(t, linestyle="--", linewidth=1)
+
+                # Check if a text element for the event already exists
+                text_exists = False
+                for text in plt.gca().texts:
+                    if text.get_position()[0] == t:
+                        # Update the text to reflect multiple events
+                        text_exists = True
+                        current_text = text.get_text()
+                        new_text = f"{current_text}, {event}" if current_text else event
+                        text.set_text(new_text)
+                        break
+
+                # Add a new text element if the event doesn't already have one
+                if not text_exists:
+                    plt.text(t, int(sum(plt.gca().get_ylim()[:2]) / 2), event, fontsize=8, rotation=-90, verticalalignment="center")
+                    plt.text(t, plt.gca().get_ylim()[1], f"{t:.2f}s", fontsize=8, ha="center", va="bottom")
 
         # Show legend if required
         if legend:
@@ -280,6 +311,10 @@ class Flight:
         print(f"Max Acceleration: {self.flight_stats["Max Acceleration"][1]:.2f} m/s^2 at {self.flight_stats["Max Acceleration"][0]:.2f}s")
         print(f"Max Q: {self.flight_stats["Max Q"][1]/1000:.2f} kPa at {self.flight_stats["Max Q"][0]:.2f}s")
         print(f"Off-Rod Velocity: {self.flight_stats["Off-Rod Velocity"][1]:.2f} m/s at {self.flight_stats["Off-Rod Velocity"][0]:.2f}s")
+        if self.drogue_deployed:
+            print(f"Drogue Deployment: {self.event_log["Drogue Deployment"]:.2f}s")
+        if self.main_deployed:
+            print(f"Main Deployment: {self.event_log["Main Deployment"]:.2f}s")
         print("-------------------------------------------------------------")
         print()
 
