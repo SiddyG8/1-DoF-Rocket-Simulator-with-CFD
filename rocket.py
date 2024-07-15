@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from math import pi, e, log
+from math import pi, e, log, sqrt
 
 
 """
@@ -163,6 +163,61 @@ class Rocket:
             wetted_area += self.fins.wetted_area
 
         return wetted_area
+
+    @property
+    def static_center_of_pressure(self) -> float:
+        """
+        Calculate the static center of pressure of the rocket.
+        Implementation derived from the Barrowman equations.
+        """
+        if not self.nose_cone or not self.fins:
+            raise ValueError("Nose cone and fins must be defined to calculate the static center of pressure")
+
+        # Rocket geometry
+        L_N = self.nose_cone.length
+        d = self.nose_cone.diameter
+        C_R = self.fins.root_chord
+        C_T = self.fins.tip_chord
+        S = self.fins.semi_span
+        X_R = self.fins.sweep_length
+        L_F = sqrt(S**2 + (C_T/2 - C_R/2 + X_R)**2)
+        R = self.diameter / 2
+        X_B = self.body_length + L_N - self.fins.position
+        N = self.fins.num_fins
+
+        # Nose cone terms
+        C_NN = 2
+        X_N = NoseCone.X_N
+
+        # Fin terms
+        C_NF = (1 + R/(S + R)) * (4*N*(S/d)**2/(1 + sqrt(1 + (2*L_F/(C_R + C_T))**2)))
+        X_F = X_B + X_R/3 * (C_R + 2*C_T)/(C_R + C_T) + 1/6*(C_R + C_T - C_R*C_T/(C_R + C_T))
+
+        # Sum up coefficients
+        C_NR = C_NN + C_NF
+
+        # CP distance from the nose cone tip
+        return (C_NN*X_N + C_NF*X_F)/C_NR
+
+    @property
+    def initial_center_of_gravity(self) -> float:
+        if not self.nose_cone or not self.fins:
+            raise ValueError("Nose cone and fins must be defined to calculate the static center of pressure")
+
+        X_N = self.nose_cone.length * self.nose_cone.X_N + self.body_length
+        X_F = self.fins.position
+        X_R = self.body_length / 2
+        X_M = self.motor.length / 2
+
+        # fuel_mass = rocket.mass - current_mass
+
+        X_CG = (X_N * self.nose_cone.mass + X_F * self.fins.total_mass + X_R * self.total_mass + X_M * self.motor.mass) / self.total_mass
+
+        return self.body_length + self.nose_cone.length - X_CG
+
+    @property
+    def static_margin(self) -> float:
+        return (self.static_center_of_pressure - self.initial_center_of_gravity) / self.diameter
 
     def attach_nose_cone(self, nose_cone: NoseCone) -> None:
         """
