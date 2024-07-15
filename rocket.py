@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from math import pi, e, log
+from math import pi, e, log, sqrt
+from constants import g0
 
 
 """
@@ -92,6 +93,17 @@ class Fins:
         return self.num_fins * self.width * self.semi_span
 
 
+@dataclass
+class Parachute:
+    diameter: float
+    drag_coefficient: float
+    mass: float
+
+    @property
+    def wetted_area(self) -> float:
+        return pi * (self.diameter / 2) ** 2
+
+
 """
 Represents a rocket.
 
@@ -120,19 +132,27 @@ class Rocket:
         self.motor = motor
         self.nose_cone = None
         self.fins = None
+        self.main_parachute = None
+        self.drogue_parachute = None
 
     @property
     def total_mass(self) -> float:
-        total_mass = self.body_mass
+        total_mass = self.body_mass + self.motor.mass
 
-        if self.motor:
-            total_mass += self.motor.mass
         if self.nose_cone:
             total_mass += self.nose_cone.mass
         if self.fins:
             total_mass += self.fins.total_mass
+        if self.main_parachute:
+            total_mass += self.main_parachute.mass
+        if self.drogue_parachute:
+            total_mass += self.drogue_parachute.mass
 
         return total_mass
+
+    @property
+    def dry_mass(self) -> float:
+        return self.total_mass - self.motor.mass
 
     @property
     def wetted_area(self) -> float:
@@ -145,6 +165,65 @@ class Rocket:
 
         return wetted_area
 
+    @property
+    def static_center_of_pressure(self) -> float:
+        """
+        Calculate the static center of pressure of the rocket.
+        Implementation derived from the Barrowman equations.
+        """
+        if not self.nose_cone or not self.fins:
+            raise ValueError("Nose cone and fins must be defined to calculate the static center of pressure")
+
+        # Rocket geometry
+        L_N = self.nose_cone.length
+        d = self.nose_cone.diameter
+        C_R = self.fins.root_chord
+        C_T = self.fins.tip_chord
+        S = self.fins.semi_span
+        X_R = self.fins.sweep_length
+        L_F = sqrt(S**2 + (C_T/2 - C_R/2 + X_R)**2)
+        R = self.diameter / 2
+        X_B = self.body_length + L_N - self.fins.position
+        N = self.fins.num_fins
+
+        # Nose cone terms
+        C_NN = 2
+        X_N = NoseCone.X_N
+
+        # Fin terms
+        C_NF = (1 + R/(S + R)) * (4*N*(S/d)**2/(1 + sqrt(1 + (2*L_F/(C_R + C_T))**2)))
+        X_F = X_B + X_R/3 * (C_R + 2*C_T)/(C_R + C_T) + 1/6*(C_R + C_T - C_R*C_T/(C_R + C_T))
+
+        # Sum up coefficients
+        C_NR = C_NN + C_NF
+
+        # CP distance from the nose cone tip
+        return (C_NN*X_N + C_NF*X_F)/C_NR
+
+    @property
+    def initial_center_of_gravity(self) -> float:
+        if not self.nose_cone or not self.fins:
+            raise ValueError("Nose cone and fins must be defined to calculate the static center of pressure")
+
+        X_N = self.nose_cone.length * self.nose_cone.X_N + self.body_length
+        X_F = self.fins.position
+        X_R = self.body_length / 2
+        X_M = self.motor.length / 2
+
+        # fuel_mass = rocket.mass - current_mass
+
+        X_CG = (X_N * self.nose_cone.mass + X_F * self.fins.total_mass + X_R * self.total_mass + X_M * self.motor.mass) / self.total_mass
+
+        return self.body_length + self.nose_cone.length - X_CG
+
+    @property
+    def static_margin(self) -> float:
+        return (self.static_center_of_pressure - self.initial_center_of_gravity) / self.diameter
+
+    @property
+    def initial_twr(self) -> float:
+        return self.motor.thrust(0) / (self.total_mass * g0)
+
     def attach_nose_cone(self, nose_cone: NoseCone) -> None:
         """
         Attaches a nose cone to the rocket.
@@ -156,12 +235,35 @@ class Rocket:
         Attaches fins to the rocket.
         """
         self.fins = fins
+    
+    def attach_main_parachute(self, parachute: Parachute) -> None:
+        """
+        Attaches a main parachute to the rocket.
+        """
+        self.main_parachute = parachute
+
+    def attach_drogue_parachute(self, parachute: Parachute) -> None:
+        """
+        Attaches a drogue parachute to the rocket.
+        """
+        self.drogue_parachute = parachute
 
     def thrust(self, t) -> float:
         """
         Returns the thrust of the rocket at a given time. Delegates to the motor's thrust method.
         """
         return self.motor.thrust(t)
+
+    def __str__(self) -> str:
+        outstring = ""
+        outstring += f"Mass: {self.total_mass:.3f} kg"
+        outstring += f"\nDiameter: {self.diameter:.3f} m"
+        outstring += f"\nLength: {self.body_length:.3f} m"
+        outstring += f"\nInitial CP (from nose): {self.static_center_of_pressure:.3f} m"
+        outstring += f"\nInitial CG (from nose): {self.initial_center_of_gravity:.3f} m"
+        outstring += f"\nStatic Margin: {self.static_margin:.2f}"
+        outstring += f"\nInitial TWR: {self.initial_twr:.2f}"
+        return outstring
 
 
 if __name__ == "__main__":
