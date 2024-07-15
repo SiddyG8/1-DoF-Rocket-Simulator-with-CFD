@@ -93,11 +93,11 @@ class Fins:
         return self.num_fins * self.width * self.semi_span
 
 
+@dataclass
 class Parachute:
-    def __init__(self, diameter: float, drag_coefficient: float, mass: float) -> None:
-        self.diameter = diameter
-        self.drag_coefficient = drag_coefficient
-        self.mass = mass
+    diameter: float
+    drag_coefficient: float
+    mass: float
 
     @property
     def wetted_area(self) -> float:
