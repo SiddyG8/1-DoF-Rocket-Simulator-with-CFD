@@ -316,6 +316,10 @@ class Flight:
         if self.main_deployed:
             print(f"Main Deployment: {self.event_log["Main Deployment"]:.2f}s")
         print("-------------------------------------------------------------")
+        print("Rocket Configuration")
+        print("-------------------------------------------------------------")
+        print(self.rocket)
+        print("-------------------------------------------------------------")
         print()
 
 
