@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from math import pi, e, log, sqrt
+from constants import g0
 
 
 """
@@ -219,6 +220,10 @@ class Rocket:
     def static_margin(self) -> float:
         return (self.static_center_of_pressure - self.initial_center_of_gravity) / self.diameter
 
+    @property
+    def initial_twr(self) -> float:
+        return self.motor.thrust(0) / (self.total_mass * g0)
+
     def attach_nose_cone(self, nose_cone: NoseCone) -> None:
         """
         Attaches a nose cone to the rocket.
@@ -248,6 +253,17 @@ class Rocket:
         Returns the thrust of the rocket at a given time. Delegates to the motor's thrust method.
         """
         return self.motor.thrust(t)
+
+    def __str__(self) -> str:
+        outstring = ""
+        outstring += f"Mass: {self.total_mass:.3f} kg"
+        outstring += f"\nDiameter: {self.diameter:.3f} m"
+        outstring += f"\nLength: {self.body_length:.3f} m"
+        outstring += f"\nInitial CP (from nose): {self.static_center_of_pressure:.3f} m"
+        outstring += f"\nInitial CG (from nose): {self.initial_center_of_gravity:.3f} m"
+        outstring += f"\nStatic Margin: {self.static_margin:.2f}"
+        outstring += f"\nInitial TWR: {self.initial_twr:.2f}"
+        return outstring
 
 
 if __name__ == "__main__":
