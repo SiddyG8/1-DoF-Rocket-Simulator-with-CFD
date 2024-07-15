@@ -1,6 +1,11 @@
 from rocket import Rocket, Motor, Fins, NoseCone, Parachute
 from flight import Flight
 
+
+# Project TODOs:
+# Add docstrings
+# Update README.md
+
 """
 Main function for running the simulation
 """
